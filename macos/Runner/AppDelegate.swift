@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import ServiceManagement
 
 import UserNotifications
 @main
@@ -8,6 +9,7 @@ class AppDelegate: FlutterAppDelegate {
     // https://github.com/leanflutter/window_manager/issues/214
     return false
   }
+    
   override func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Request notification authorization
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge]) { granted, error in
@@ -15,9 +17,34 @@ class AppDelegate: FlutterAppDelegate {
                 print("Error requesting notification authorization: \(error)")
             }
         }
+      
+      if #available(macOS 13.0, *) {
+          let service = SMAppService.daemon(plistName: "app.hiddify.com.daemon.plist")
+          
+          let status = service.status
+          
+          if service.status == .notRegistered {
+              do {
+                  try service.register()
+              } catch {
+                  print(error)
+              }
+          }
+      }
     }
-
-
+    
+    override func applicationWillTerminate(_ notification: Notification) {
+        if #available(macOS 13.0, *) {
+            let service = SMAppService.daemon(plistName: "app.hiddify.com.daemon.plist")
+            
+            do {
+                try service.unregister()
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
   // // window manager restore from dock: https://leanflutter.dev/blog/click-dock-icon-to-restore-after-closing-the-window
   // override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
   //     if !flag {
