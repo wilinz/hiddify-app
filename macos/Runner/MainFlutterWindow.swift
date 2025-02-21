@@ -1,7 +1,7 @@
 import Cocoa
 import FlutterMacOS
-import window_manager
 import XPC
+import window_manager
 
 extension NativeReceiver {
     var channelName: String {
@@ -22,46 +22,47 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
     private var flutterViewController: FlutterViewController!
     private var singboxConnection: NSXPCConnection!
     private var receiverChannels: [NativeReceiver: FlutterMethodChannel] = [:]
-    
+
     override func awakeFromNib() {
         flutterViewController = FlutterViewController()
         let windowFrame = frame
         contentViewController = flutterViewController
         setFrame(windowFrame, display: true)
-        
+
         RegisterGeneratedPlugins(registry: flutterViewController)
-        
+
         super.awakeFromNib()
-        
+
         if #available(macOS 13.0, *) {
             setupChannel()
         }
     }
-    
+
     @available(macOS 13.0, *)
     func setupChannel() {
         let singboxChannel = FlutterMethodChannel(
             name: "app.hiddify.com.macos",
             binaryMessenger: flutterViewController.engine.binaryMessenger
         )
-        
+
         singboxChannel.setMethodCallHandler(singboxHandler)
     }
-    
+
     @available(macOS 13.0, *)
     private func getOrCreateReceiverChannel(for receiver: NativeReceiver) -> FlutterMethodChannel {
         if let existingChannel = receiverChannels[receiver] {
             return existingChannel
         }
-        
+
         let channel = FlutterMethodChannel(
             name: receiver.channelName,
             binaryMessenger: flutterViewController.engine.binaryMessenger
         )
-        
+        receiverChannels[receiver] = channel
+
         return channel
     }
-    
+
     @available(macOS 13.0, *)
     private func setupConnection() {
         singboxConnection = NSXPCConnection(machServiceName: "app.hiddify.com.daemon.xpc")
@@ -72,18 +73,18 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             with: SingboxReceiverProtocol.self
         )
         singboxConnection?.exportedObject = self
-        
+
         singboxConnection?.resume()
-        
+
         singboxConnection?.interruptionHandler = { [weak self] in
             self?.setupConnection()
         }
-        
+
         singboxConnection?.invalidationHandler = { [weak self] in
             self?.setupConnection()
         }
     }
-    
+
     @available(macOS 13.0, *)
     private func getSingboxService() -> SingboxProtocol? {
         return singboxConnection?.remoteObjectProxy as? SingboxProtocol
@@ -97,14 +98,14 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             }
         }
     }
-    
+
     @available(macOS 13.0, *)
     private func singboxHandler(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let xpcService = getSingboxService() else {
             setupConnection()
             return singboxHandler(call, result: result)
         }
-        
+
         switch call.method {
         case "setupOnce":
             return xpcService.setupOnce {
@@ -112,10 +113,10 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             }
         case "setup":
             guard let args = call.arguments as? [String: Any],
-                  let baseDir = args["baseDir"] as? String,
-                  let workingDir = args["workingDir"] as? String,
-                  let tempDir = args["tempDir"] as? String,
-                  let debug = args["debug"] as? Bool
+                let baseDir = args["baseDir"] as? String,
+                let workingDir = args["workingDir"] as? String,
+                let tempDir = args["tempDir"] as? String,
+                let debug = args["debug"] as? Bool
             else {
                 result(
                     FlutterError(
@@ -134,12 +135,12 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "parse":
             guard let args = call.arguments as? [String: Any],
-                  let path = args["path"] as? String,
-                  let tempPath = args["tempPath"] as? String,
-                  let debug = args["debug"] as? Bool
+                let path = args["path"] as? String,
+                let tempPath = args["tempPath"] as? String,
+                let debug = args["debug"] as? Bool
             else {
                 result(
                     FlutterError(
@@ -157,10 +158,10 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "changeHiddifyOptions":
             guard let args = call.arguments as? [String: Any],
-                  let options = args["options"] as? String
+                let options = args["options"] as? String
             else {
                 result(
                     FlutterError(
@@ -174,10 +175,10 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             return xpcService.changeHiddifyOptions(options: options) {
                 result($0)
             }
-            
+
         case "generateConfig":
             guard let args = call.arguments as? [String: Any],
-                  let path = args["path"] as? String
+                let path = args["path"] as? String
             else {
                 result(
                     FlutterError(
@@ -191,11 +192,11 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             return xpcService.generateConfig(path: path) {
                 result($0)
             }
-            
+
         case "start":
             guard let args = call.arguments as? [String: Any],
-                  let path = args["path"] as? String,
-                  let disableMemoryLimit = args["disableMemoryLimit"] as? Bool
+                let path = args["path"] as? String,
+                let disableMemoryLimit = args["disableMemoryLimit"] as? Bool
             else {
                 result(
                     FlutterError(
@@ -212,16 +213,16 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "stop":
-            return xpcService.stop() {
+            return xpcService.stop {
                 result($0)
             }
-            
+
         case "restart":
             guard let args = call.arguments as? [String: Any],
-                  let path = args["path"] as? String,
-                  let disableMemoryLimit = args["disableMemoryLimit"] as? Bool
+                let path = args["path"] as? String,
+                let disableMemoryLimit = args["disableMemoryLimit"] as? Bool
             else {
                 result(
                     FlutterError(
@@ -238,23 +239,26 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "stopCommandClient":
             guard let args = call.arguments as? [String: Any],
-                  let id = args["id"] as? Int32
+                let id = args["id"] as? Int32
             else {
-                result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for stopCommandClient", details: nil))
+                result(
+                    FlutterError(
+                        code: "INVALID_ARGUMENTS",
+                        message: "Invalid arguments for stopCommandClient", details: nil))
                 return
             }
             return xpcService.stopCommandClient(id: id) {
                 result($0)
             }
-            
+
         case "startCommandClient":
             guard let args = call.arguments as? [String: Any],
-                  let id = args["id"] as? Int32,
-                  let port = args["port"] as? Int64,
-                  let receiver = NativeReceiver(rawValue: port)
+                let id = args["id"] as? Int32,
+                let port = args["port"] as? Int64,
+                let receiver = NativeReceiver(rawValue: port)
             else {
                 result(
                     FlutterError(
@@ -268,11 +272,11 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             return xpcService.startCommandClient(id: id, receiver: receiver) {
                 result($0)
             }
-            
+
         case "selectOutbound":
             guard let args = call.arguments as? [String: Any],
-                  let groupTag = args["groupTag"] as? String,
-                  let outboundTag = args["outboundTag"] as? String
+                let groupTag = args["groupTag"] as? String,
+                let outboundTag = args["outboundTag"] as? String
             else {
                 result(
                     FlutterError(
@@ -289,10 +293,10 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "urlTest":
             guard let args = call.arguments as? [String: Any],
-                  let groupTag = args["groupTag"] as? String
+                let groupTag = args["groupTag"] as? String
             else {
                 result(
                     FlutterError(
@@ -308,12 +312,12 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         case "generateWarpConfig":
             guard let args = call.arguments as? [String: Any],
-                  let licenseKey = args["licenseKey"] as? String,
-                  let previousAccountId = args["previousAccountId"] as? String,
-                  let previousAccessToken = args["previousAccessToken"] as? String
+                let licenseKey = args["licenseKey"] as? String,
+                let previousAccountId = args["previousAccountId"] as? String,
+                let previousAccessToken = args["previousAccessToken"] as? String
             else {
                 result(
                     FlutterError(
@@ -331,12 +335,12 @@ class MainFlutterWindow: NSWindow, SingboxReceiverProtocol {
             ) {
                 result($0)
             }
-            
+
         default:
             result(FlutterMethodNotImplemented)
         }
     }
-    
+
     // window manager hidden at launch
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
