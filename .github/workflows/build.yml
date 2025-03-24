@@ -60,29 +60,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: android-apk
-            os: ubuntu-latest
-            targets: apk
-
-          - platform: android-aab
-            os: ubuntu-latest
-            targets: aab
-
-          - platform: windows
-            os: windows-2019
-            aarch: amd64
-            targets: exe,msix
-
-          - platform: linux
-            os: ubuntu-22.04
-            aarch: amd64
-            targets: AppImage,deb,rpm
+#          - platform: android-apk
+#            os: ubuntu-latest
+#            targets: apk
+#
+#          - platform: android-aab
+#            os: ubuntu-latest
+#            targets: aab
+#
+#          - platform: windows
+#            os: windows-2019
+#            aarch: amd64
+#            targets: exe,msix
+#
+#          - platform: linux
+#            os: ubuntu-22.04
+#            aarch: amd64
+#            targets: AppImage,deb,rpm
 
           - platform: macos
             os: macos-13
             aarch: universal
             targets: dmg,pkg
-            
+
           # - platform: ios
           #   os: macos-14
           #   aarch: universal
@@ -100,16 +100,16 @@ jobs:
             p12-file-base64: "${{ secrets.APPLE_CERTIFICATE_P12 }}"
             p12-password: "${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}"
 
-      - name: Import Apple Mobile Provisioning Profile
-        if: ${{ inputs.upload-artifact && startsWith(matrix.os,'macos') }}
-        run: |
-           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-           echo "${{secrets.APPLE_MOBILE_PROVISIONING_PROFILES_TARGZ_BASE64}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
-           ls ~/Library/MobileDevice/Provisioning\ Profiles
-        #   ls ~/Library/MobileDevice/Provisioning\ Profiles
-        #   echo "${{secrets.NEW_APPLE_MOBILE_PROVISIONING_PROFILES_TARXZ_BASE64}}"|base64 --decode | tar xJ -C ~/Library/MobileDevice/Provisioning\ Profiles
-        #   # echo "${{secrets.NEW_APPLE_MOBILE_PROVISIONING_PROFILES_TARGZ_BASE64_2}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
-          
+#      - name: Import Apple Mobile Provisioning Profile
+#        if: ${{ inputs.upload-artifact && startsWith(matrix.os,'macos') }}
+#        run: |
+#           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+#           echo "${{secrets.APPLE_MOBILE_PROVISIONING_PROFILES_TARGZ_BASE64}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
+#           ls ~/Library/MobileDevice/Provisioning\ Profiles
+#        #   ls ~/Library/MobileDevice/Provisioning\ Profiles
+#        #   echo "${{secrets.NEW_APPLE_MOBILE_PROVISIONING_PROFILES_TARXZ_BASE64}}"|base64 --decode | tar xJ -C ~/Library/MobileDevice/Provisioning\ Profiles
+#        #   # echo "${{secrets.NEW_APPLE_MOBILE_PROVISIONING_PROFILES_TARGZ_BASE64_2}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
+#
 
 
       
@@ -380,49 +380,49 @@ jobs:
           track: 'beta'
 
 
-  upload-to-testflight:
-    needs: [build]
-    if: ${{ inputs.upload-artifact &&  inputs.tag-name != 'draft' }}
-    #if: ${{ inputs.upload-artifact }}
-    runs-on: macOS-latest
-    timeout-minutes: 30
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          pattern: "*ios*"
-          path: ./out/
-
-      - uses: Apple-Actions/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.APPLE_UPLOAD_CERTIFICATE_P12 }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
-
-      - uses: Apple-Actions/download-provisioning-profiles@v1
-        with:
-          bundle-id: app.hiddify.com
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
-      - uses: Apple-Actions/download-provisioning-profiles@v1
-        with:
-          bundle-id: app.hiddify.com.SingBoxPacketTunnel
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
-  
-
-
-      - name: Import Apple Mobile Provisioning Profile
-        run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${{secrets.APPLE_DIST_PROVISIONING_PROFILES_TARGZ_BASE64}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
-        #echo "${{secrets.NEW_APPLE_STORE_PROVISIONING_PROFILES_TARXZ_BASE64}}"|base64 --decode | tar xJ -C ~/Library/MobileDevice/Provisioning\ Profiles
-
-      - uses: Apple-Actions/upload-testflight-build@v1
-        with:
-          app-path: 'out/Hiddify-iOS.ipa' 
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+#  upload-to-testflight:
+#    needs: [build]
+#    if: ${{ inputs.upload-artifact &&  inputs.tag-name != 'draft' }}
+#    #if: ${{ inputs.upload-artifact }}
+#    runs-on: macOS-latest
+#    timeout-minutes: 30
+#    steps:
+#      - name: Download Artifact
+#        uses: actions/download-artifact@v4
+#        with:
+#          merge-multiple: true
+#          pattern: "*ios*"
+#          path: ./out/
+#
+#      - uses: Apple-Actions/import-codesign-certs@v2
+#        with:
+#          p12-file-base64: ${{ secrets.APPLE_UPLOAD_CERTIFICATE_P12 }}
+#          p12-password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+#
+#      - uses: Apple-Actions/download-provisioning-profiles@v1
+#        with:
+#          bundle-id: app.hiddify.com
+#          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+#          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+#          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+#      - uses: Apple-Actions/download-provisioning-profiles@v1
+#        with:
+#          bundle-id: app.hiddify.com.SingBoxPacketTunnel
+#          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+#          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+#          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+#
+#
+#
+#      - name: Import Apple Mobile Provisioning Profile
+#        run: |
+#          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+#          echo "${{secrets.APPLE_DIST_PROVISIONING_PROFILES_TARGZ_BASE64}}"|base64 --decode | tar xz -C ~/Library/MobileDevice/Provisioning\ Profiles
+#        #echo "${{secrets.NEW_APPLE_STORE_PROVISIONING_PROFILES_TARXZ_BASE64}}"|base64 --decode | tar xJ -C ~/Library/MobileDevice/Provisioning\ Profiles
+#
+#      - uses: Apple-Actions/upload-testflight-build@v1
+#        with:
+#          app-path: 'out/Hiddify-iOS.ipa'
+#          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+#          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+#          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
